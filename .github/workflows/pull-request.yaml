@@ -1,0 +1,74 @@
+name: Pull request checks
+
+on:
+  pull_request:
+
+concurrency:
+  group: pr-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Read upstream ref
+        id: upstream
+        run: echo "REF=$(tr -d '[:space:]' < upstream-ref.txt)" >> "$GITHUB_OUTPUT"
+
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+
+      - name: Install actionlint
+        run: bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.7/scripts/download-actionlint.bash)
+
+      - name: Run actionlint
+        run: ./actionlint -color
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: Run yamllint
+        run: yamllint -c .yamllint .github/workflows
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          load: true
+          tags: meshflow-rf-propagation:pr
+          build-args: |
+            UPSTREAM_REF=${{ steps.upstream.outputs.REF }}
+
+      - name: Boot smoke test
+        run: |
+          set -euxo pipefail
+          docker network create smokenet
+          docker run -d --name redis-smoke --network smokenet redis:7-alpine
+          docker run -d --name app-smoke --network smokenet \
+            -e REDIS_URL=redis://redis-smoke:6379/0 \
+            -p 18080:8080 \
+            meshflow-rf-propagation:pr
+          for _ in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18080/docs || true)
+            if [ "$code" = "200" ]; then
+              echo "smoke OK"
+              docker rm -f app-smoke redis-smoke
+              docker network rm smokenet
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs app-smoke 2>&1 || true
+          exit 1

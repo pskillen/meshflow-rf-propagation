@@ -1,0 +1,19 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  site-planner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        UPSTREAM_REF: ${UPSTREAM_REF:?set UPSTREAM_REF to the contents of upstream-ref.txt}
+    ports:
+      - "8080:8080"
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      SDF_DIR: /data/sdf
+    depends_on:
+      - redis
