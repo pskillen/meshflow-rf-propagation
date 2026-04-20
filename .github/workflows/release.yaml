@@ -1,0 +1,28 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  extract-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract Release Tag
+        id: get_tag
+        run: echo "VERSION_LABEL=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
+    outputs:
+      VERSION_LABEL: ${{ steps.get_tag.outputs.VERSION_LABEL }}
+
+  build:
+    needs:
+      - extract-tag
+    uses: ./.github/workflows/docker-build.yaml
+    with:
+      VERSION_LABEL: ${{ needs.extract-tag.outputs.VERSION_LABEL }}
+      ENVIRONMENT: prod
