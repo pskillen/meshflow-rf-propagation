@@ -1,0 +1,6 @@
+.DS_Store
+*.iml
+__pycache__/
+*.py[cod]
+.upstream-tmp/
+tmp/
