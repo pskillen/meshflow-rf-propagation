@@ -2,7 +2,7 @@
 # hadolint global ignore=DL3008,DL3009
 ARG UPSTREAM_REF
 
-FROM python:3.14-slim AS builder
+FROM python:3.12-slim AS builder
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -69,7 +69,7 @@ ENV UPSTREAM_ROOT=/build/upstream \
 RUN mkdir -p /data/sdf \
     && python3 /build/docker/bake_uk_sdf.py
 
-FROM python:3.14-slim AS runtime
+FROM python:3.12-slim AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -90,7 +90,7 @@ RUN apt-get update \
 
 WORKDIR /app
 
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 COPY --from=builder /build/upstream/app /app/app
