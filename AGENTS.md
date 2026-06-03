@@ -30,7 +30,7 @@ Then hit `http://localhost:8080/docs`. Redis must be reachable at `REDIS_URL`.
 
 ## Source control
 
-Follow `.cursor/skills/meshflow-git-workflow/SKILL.md` (conventional commits, branch naming when using issues). For PR descriptions, follow `.github/pull_request_template.md` and write `tmp/PR.md` when asked.
+Follow the `meshflow-git-workflow` skill (`MeshFlow/.cursor/skills/meshflow-git-workflow/SKILL.md`, in the MeshFlow umbrella workspace) (conventional commits, branch naming when using issues). For PR descriptions, follow `.github/pull_request_template.md` and write `tmp/PR.md` when asked.
 
 Use the **github-personal** MCP for GitHub operations. The `gh` CLI is not available; do not use it.
 
